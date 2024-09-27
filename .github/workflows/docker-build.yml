@@ -49,11 +49,13 @@ jobs:
         env:
           PACKAGES_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
         run: |
           mvn clean package jib:build \
           -Djib.to.auth.username=${{ github.actor }} \
           -Djib.to.auth.password=${{ secrets.GITHUB_TOKEN }} \
           -Djib.allowInsecureRegistries=true \
+          -Dgithub.repository.owner=${{ github.repository_owner }} \
           --settings ~/.m2/settings.xml
 
       - name: Image digest
