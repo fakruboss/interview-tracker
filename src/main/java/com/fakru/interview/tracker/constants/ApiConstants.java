@@ -1,9 +1,9 @@
 package com.fakru.interview.tracker.constants;
 
-import lombok.experimental.UtilityClass;
+public final class ApiConstants {
 
-@UtilityClass
-public class ApiConstants {
+    public static final String MESSAGE = "message";
 
-    public String MESSAGE = "message";
+    private ApiConstants() {
+    }
 }
