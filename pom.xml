@@ -163,15 +163,17 @@
                 <version>3.3.2</version>
                 <configuration>
                     <from>
-                        <image>eclipse-temurin:17-jre</image>
+                        <image>eclipse-temurin:17-jre-alpine</image>
                     </from>
                     <to>
                         <image>ghcr.io/${github.repository.owner}/${project.artifactId}:${project.version}</image>
-                        <auth>
-                            <username>${env.GITHUB_ACTOR}</username>
-                            <password>${env.GITHUB_TOKEN}</password>
-                        </auth>
                     </to>
+                    <container>
+                        <jvmFlags>
+                            <jvmFlag>-Xms512m</jvmFlag>
+                            <jvmFlag>-Xmx512m</jvmFlag>
+                        </jvmFlags>
+                    </container>
                 </configuration>
             </plugin>
         </plugins>
