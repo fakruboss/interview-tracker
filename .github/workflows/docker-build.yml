@@ -36,11 +36,8 @@ jobs:
           PACKAGES_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
         run: |
           mvn clean package jib:build \
-          -Djib.to.image=ghcr.io/${{ github.repository }}:${{ github.sha }} \
           -Djib.to.auth.username=${{ github.actor }} \
           -Djib.to.auth.password=${{ secrets.GITHUB_TOKEN }} \
-          -Djib.from.auth.username=${{ github.actor }} \
-          -Djib.from.auth.password=${{ secrets.PACKAGES_TOKEN }} \
           --settings ~/.m2/settings.xml
 
       - name: Image digest
