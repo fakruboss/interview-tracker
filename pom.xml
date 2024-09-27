@@ -163,7 +163,7 @@
                 <version>3.3.2</version>
                 <configuration>
                     <from>
-                        <image>ghcr.io/adoptium/eclipse-temurin:17-jre</image>
+                        <image>eclipse-temurin:17-jre</image>
                     </from>
                     <to>
                         <image>ghcr.io/${project.groupId}/${project.artifactId}:${project.version}</image>
