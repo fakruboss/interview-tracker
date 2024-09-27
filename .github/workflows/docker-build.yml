@@ -24,9 +24,23 @@ jobs:
       - name: Configure Maven settings for GitHub Packages
         env:
           PACKAGES_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p ~/.m2
-          echo "<settings><servers><server><id>github</id><username>${GITHUB_ACTOR}</username><password>${PACKAGES_TOKEN}</password></server></servers></settings>" > ~/.m2/settings.xml
+          echo "<settings>
+            <servers>
+              <server>
+                <id>github</id>
+                <username>${GITHUB_ACTOR}</username>
+                <password>${PACKAGES_TOKEN}</password>
+              </server>
+              <server>
+                <id>github-packages</id>
+                <username>${GITHUB_ACTOR}</username>
+                <password>${GITHUB_TOKEN}</password>
+              </server>
+            </servers>
+          </settings>" > ~/.m2/settings.xml
 
       - name: Install Lombok
         run: mvn lombok:delombok
@@ -34,10 +48,12 @@ jobs:
       - name: Build with Maven and Jib
         env:
           PACKAGES_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mvn clean package jib:build \
           -Djib.to.auth.username=${{ github.actor }} \
           -Djib.to.auth.password=${{ secrets.GITHUB_TOKEN }} \
+          -Djib.allowInsecureRegistries=true \
           --settings ~/.m2/settings.xml
 
       - name: Image digest
