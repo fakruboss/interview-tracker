@@ -5,7 +5,6 @@ import com.fakru.interview.tracker.model.request.RegisterUserRequest;
 import com.fakru.interview.tracker.model.request.UserLoginRequest;
 import com.fakru.interview.tracker.model.request.ValidateOTPRequest;
 import com.fakru.interview.tracker.service.UserService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.JWTClaimsSet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,6 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 import java.util.UUID;
+
+import static com.fakru.interview.tracker.constants.ApiConstants.MESSAGE;
 
 @RestController
 @Slf4j
@@ -37,7 +38,7 @@ public class UserController {
                                                           HttpServletResponse response) {
         String token = userService.createUser(registerUserRequest);
         response.setHeader("Authorization", "Bearer " + token);
-        return new ResponseEntity<>(Map.of("message", "user registered successfully"), HttpStatus.OK);
+        return new ResponseEntity<>(Map.of(MESSAGE, "user registered successfully"), HttpStatus.OK);
     }
 
     @PostMapping("/api/v1/user/login")
@@ -46,14 +47,13 @@ public class UserController {
             throws JOSEException {
         String token = userService.loginUser(userLoginRequest.getEmail(), userLoginRequest.getPassword());
         response.setHeader("Authorization", "Bearer " + token);
-        return new ResponseEntity<>(Map.of("message", "login successful"), HttpStatus.OK);
+        return new ResponseEntity<>(Map.of(MESSAGE, "login successful"), HttpStatus.OK);
     }
 
     @JwtAuthenticate
     @PostMapping("/api/v1/user/verifyEmail")
     public ResponseEntity<Map<String, String>> verifyEmail(HttpServletRequest httpRequest,
-                                                           @RequestBody ValidateOTPRequest request)
-            throws JsonProcessingException {
+                                                           @RequestBody ValidateOTPRequest request) {
         JWTClaimsSet claimsSet = (JWTClaimsSet) httpRequest.getAttribute("jwtClaims");
         String message = userService.verifyOTP(UUID.fromString(claimsSet.getSubject()), request.getOtp());
         HttpStatus status = switch (message) {
@@ -64,6 +64,6 @@ public class UserController {
             default -> HttpStatus.INTERNAL_SERVER_ERROR;
         };
 
-        return new ResponseEntity<>(Map.of("message", message), status);
+        return new ResponseEntity<>(Map.of(MESSAGE, message), status);
     }
 }

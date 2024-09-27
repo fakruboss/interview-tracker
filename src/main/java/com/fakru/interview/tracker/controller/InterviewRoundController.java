@@ -17,6 +17,8 @@ import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
 
+import static com.fakru.interview.tracker.constants.ApiConstants.MESSAGE;
+
 @RestController
 public class InterviewRoundController {
 
@@ -35,7 +37,7 @@ public class InterviewRoundController {
         JWTClaimsSet claimsSet = JoseJwtUtil.extractClaims(bearerToken);
         String token = jobService.addInterview(request, jobId, claimsSet);
         response.setHeader("Authorization", "Bearer " + token);
-        return new ResponseEntity<>(Map.of("message", "Interview round added successfully"), HttpStatus.OK);
+        return new ResponseEntity<>(Map.of(MESSAGE, "Interview round added successfully"), HttpStatus.OK);
     }
 
     @GetMapping("api/v1/jobs/{jobId}/interview")

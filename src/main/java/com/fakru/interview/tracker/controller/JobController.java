@@ -4,7 +4,6 @@ import com.fakru.interview.tracker.annotation.JwtAuthenticate;
 import com.fakru.interview.tracker.model.request.CreateJobRequest;
 import com.fakru.interview.tracker.model.response.JobsResponse;
 import com.fakru.interview.tracker.service.JobService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jwt.JWTClaimsSet;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +15,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+
+import static com.fakru.interview.tracker.constants.ApiConstants.MESSAGE;
 
 @RestController
 public class JobController {
@@ -35,13 +36,12 @@ public class JobController {
             throws IOException {
         JWTClaimsSet claimsSet = (JWTClaimsSet) httpRequest.getAttribute("jwtClaims");
         jobService.addJob(request, claimsSet, resume);
-        return new ResponseEntity<>(Map.of("message", "New Job added successfully"), HttpStatus.OK);
+        return new ResponseEntity<>(Map.of(MESSAGE, "New Job added successfully"), HttpStatus.OK);
     }
 
     @JwtAuthenticate
     @GetMapping("api/v1/jobs")
-    public ResponseEntity<List<JobsResponse>> listAllJobs(HttpServletRequest httpRequest)
-            throws JsonProcessingException {
+    public ResponseEntity<List<JobsResponse>> listAllJobs(HttpServletRequest httpRequest) {
         JWTClaimsSet claimsSet = (JWTClaimsSet) httpRequest.getAttribute("jwtClaims");
         return new ResponseEntity<>(jobService.listJobsByUserId(claimsSet.getSubject()), HttpStatus.OK);
     }
