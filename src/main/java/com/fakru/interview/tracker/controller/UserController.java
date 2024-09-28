@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.fakru.interview.tracker.constants.ApiConstants.JWT_CLAIMS;
 import static com.fakru.interview.tracker.constants.ApiConstants.MESSAGE;
 
 @RestController
@@ -54,7 +55,7 @@ public class UserController {
     @PostMapping("/api/v1/user/verifyEmail")
     public ResponseEntity<Map<String, String>> verifyEmail(HttpServletRequest httpRequest,
                                                            @RequestBody ValidateOTPRequest request) {
-        JWTClaimsSet claimsSet = (JWTClaimsSet) httpRequest.getAttribute("jwtClaims");
+        JWTClaimsSet claimsSet = (JWTClaimsSet) httpRequest.getAttribute(JWT_CLAIMS);
         String message = userService.verifyOTP(UUID.fromString(claimsSet.getSubject()), request.getOtp());
         HttpStatus status = switch (message) {
             case "Email already validated" -> HttpStatus.BAD_REQUEST;
@@ -65,5 +66,12 @@ public class UserController {
         };
 
         return new ResponseEntity<>(Map.of(MESSAGE, message), status);
+    }
+
+    // TODO: handle reset password
+    @PostMapping("/api/v1/user/resetPassword")
+    public ResponseEntity<Void> resetPassword(@RequestBody UserLoginRequest userLoginRequest,
+                                              HttpServletResponse response) {
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }

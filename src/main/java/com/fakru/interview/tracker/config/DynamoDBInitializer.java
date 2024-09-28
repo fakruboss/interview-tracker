@@ -65,13 +65,9 @@ public class DynamoDBInitializer {
             CreateTableRequest request = CreateTableRequest.builder()
                     .tableName("job")
                     .keySchema(KeySchemaElement.builder()
-                                    .attributeName("pk")
-                                    .keyType(KeyType.HASH)
-                                    .build(),
-                            KeySchemaElement.builder()
-                                    .attributeName("sk")
-                                    .keyType(KeyType.RANGE)
-                                    .build())
+                            .attributeName("pk")
+                            .keyType(KeyType.HASH)
+                            .build())
                     .attributeDefinitions(
                             AttributeDefinition.builder()
                                     .attributeName("pk")
@@ -86,16 +82,33 @@ public class DynamoDBInitializer {
                                     .attributeType(ScalarAttributeType.S)
                                     .build()
                     )
-                    .globalSecondaryIndexes(GlobalSecondaryIndex.builder()
-                            .indexName("user_id-index")
-                            .keySchema(KeySchemaElement.builder()
-                                    .attributeName("user_id")
-                                    .keyType(KeyType.HASH) // GSI partition key
-                                    .build())
-                            .projection(Projection.builder()
-                                    .projectionType(ProjectionType.ALL) // Fetch all attributes
-                                    .build())
-                            .build())
+                    .globalSecondaryIndexes(
+                            GlobalSecondaryIndex.builder()
+                                    .indexName("user_id-index")
+                                    .keySchema(KeySchemaElement.builder()
+                                            .attributeName("user_id")
+                                            .keyType(KeyType.HASH)
+                                            .build())
+                                    .projection(Projection.builder()
+                                            .projectionType(ProjectionType.ALL)
+                                            .build())
+                                    .build(),
+                            GlobalSecondaryIndex.builder()
+                                    .indexName("pk-sk-index")
+                                    .keySchema(
+                                            KeySchemaElement.builder()
+                                                    .attributeName("pk")
+                                                    .keyType(KeyType.HASH)
+                                                    .build(),
+                                            KeySchemaElement.builder()
+                                                    .attributeName("sk")
+                                                    .keyType(KeyType.RANGE)
+                                                    .build())
+                                    .projection(Projection.builder()
+                                            .projectionType(ProjectionType.ALL)
+                                            .build())
+                                    .build()
+                    )
                     .billingMode(BillingMode.PAY_PER_REQUEST)
                     .build();
 

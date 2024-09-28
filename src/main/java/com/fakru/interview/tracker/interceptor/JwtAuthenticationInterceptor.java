@@ -15,6 +15,8 @@ import util.JwtAuthenticationHandler;
 import java.io.IOException;
 import java.util.Map;
 
+import static com.fakru.interview.tracker.constants.ApiConstants.JWT_CLAIMS;
+
 @Component
 public class JwtAuthenticationInterceptor implements HandlerInterceptor {
 
@@ -51,7 +53,7 @@ public class JwtAuthenticationInterceptor implements HandlerInterceptor {
             if (jwtAuthenticate != null) {
                 JWTClaimsSet claimsSet = jwtHandler.authenticate(Map.of("request", request));
                 if (claimsSet != null) {
-                    request.setAttribute("jwtClaims", claimsSet);
+                    request.setAttribute(JWT_CLAIMS, claimsSet);
                     return true;
                 }
                 return false;
@@ -63,7 +65,7 @@ public class JwtAuthenticationInterceptor implements HandlerInterceptor {
     @Override
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler,
                            ModelAndView modelAndView) throws Exception {
-        JWTClaimsSet claimsSet = (JWTClaimsSet) request.getAttribute("jwtClaims");
+        JWTClaimsSet claimsSet = (JWTClaimsSet) request.getAttribute(JWT_CLAIMS);
         String newToken = jwtHandler.refreshToken(claimsSet);
         if (newToken != null) {
             response.setHeader("Authorization", "Bearer " + newToken);

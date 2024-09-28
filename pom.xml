@@ -121,7 +121,7 @@
         <dependency>
             <groupId>com.fakru</groupId>
             <artifactId>fakru-commons</artifactId>
-            <version>1.0.20240924161444</version>
+            <version>1.0.20240928101640</version>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>

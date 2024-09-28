@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.sql.Timestamp;
-import java.util.List;
 
 @Builder
 @Data
@@ -18,8 +17,15 @@ public class Job {
     private JobApplicationStatus status;
     private Timestamp dateApplied;
     private boolean isActive;
-    private Salary salary;
-    private List<Interview> rounds;
+    private String currency;
+    private long minSalary;
+    private long maxSalary;
+    private long esops;
+    private long rsu;
+    private long joiningBonus;
+    private long signOnBonus;
+    private long relocationBonus;
+    private String vestingSchedule;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 }

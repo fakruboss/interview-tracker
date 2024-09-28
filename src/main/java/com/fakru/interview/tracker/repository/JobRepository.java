@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +20,7 @@ public class JobRepository {
     private static final String TABLE_NAME = "job";
     private static final String PK_COLUMN = "pk";
     private static final String DATA_COLUMN = "data";
-    private static final String GSI_USER_ID_COLUMN = "userId";
+    private static final String GSI_USER_ID_COLUMN = "user_id";
     private final DynamoDbClient dynamoDbClient;
     private final ObjectMapper objectMapper;
 
@@ -29,36 +30,47 @@ public class JobRepository {
     }
 
     public void saveJob(String uuid, Job job) {
-        Map<String, AttributeValue> item = new HashMap<>();
-        item.put(PK_COLUMN, AttributeValue.builder().s(uuid).build());
-        item.put(GSI_USER_ID_COLUMN, AttributeValue.builder().s(job.getUserId()).build());
+        try {
+            Map<String, AttributeValue> item = new HashMap<>();
+            item.put(PK_COLUMN, AttributeValue.builder().s(uuid).build());
+            item.put(GSI_USER_ID_COLUMN, AttributeValue.builder().s(job.getUserId()).build());
 
-        item.put("company", AttributeValue.builder().s(job.getCompany()).build());
-        item.put("position", AttributeValue.builder().s(job.getPosition()).build());
-        item.put("location", AttributeValue.builder().s(job.getLocation()).build());
-        item.put("source", AttributeValue.builder().s(job.getSource()).build());
-        item.put("status", AttributeValue.builder().s(job.getStatus().name()).build());
-        item.put("date_applied", AttributeValue.builder().n(String.valueOf(job.getDateApplied().getTime())).build());
-        item.put("is_active", AttributeValue.builder().bool(job.isActive()).build());
-        // handle salary
-        // handle rounds
-        item.put("created_at", AttributeValue.builder().n(String.valueOf(job.getCreatedAt().getTime())).build());
-        item.put("updated_at", AttributeValue.builder().n(String.valueOf(job.getUpdatedAt().getTime())).build());
+            item.put("company", AttributeValue.builder().s(job.getCompany()).build());
+            item.put("position", AttributeValue.builder().s(job.getPosition()).build());
+            item.put("location", AttributeValue.builder().s(job.getLocation()).build());
+            item.put("source", AttributeValue.builder().s(job.getSource()).build());
+            item.put("status", AttributeValue.builder().s(job.getStatus().name()).build());
+            item.put("date_applied", AttributeValue.builder().n(String.valueOf(job.getDateApplied().getTime())).build());
+            item.put("is_active", AttributeValue.builder().bool(job.isActive()).build());
+            item.put("currency", AttributeValue.builder().s(job.getCurrency()).build());
+            item.put("min_salary", AttributeValue.builder().n(String.valueOf(job.getMinSalary())).build());
+            item.put("max_salary", AttributeValue.builder().n(String.valueOf(job.getMaxSalary())).build());
+            item.put("esops", AttributeValue.builder().n(String.valueOf(job.getEsops())).build());
+            item.put("rsu", AttributeValue.builder().n(String.valueOf(job.getRsu())).build());
+            item.put("joining_bonus", AttributeValue.builder().n(String.valueOf(job.getJoiningBonus())).build());
+            item.put("sign_on_bonus", AttributeValue.builder().n(String.valueOf(job.getSignOnBonus())).build());
+            item.put("relocation_bonus", AttributeValue.builder().n(String.valueOf(job.getRelocationBonus())).build());
+            item.put("vesting_schedule", AttributeValue.builder().s(job.getVestingSchedule()).build());
+            item.put("created_at", AttributeValue.builder().n(String.valueOf(job.getCreatedAt().getTime())).build());
+            item.put("updated_at", AttributeValue.builder().n(String.valueOf(job.getUpdatedAt().getTime())).build());
 
-        PutItemRequest request = PutItemRequest.builder()
-                .tableName(TABLE_NAME)
-                .item(item)
-                .build();
-        dynamoDbClient.putItem(request);
+            PutItemRequest request = PutItemRequest.builder()
+                    .tableName(TABLE_NAME)
+                    .item(item)
+                    .build();
+            dynamoDbClient.putItem(request);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
     }
 
     public List<Map<String, AttributeValue>> findByUserId(String userId) {
-        Map<String, AttributeValue> eav = Map.of(":userId", AttributeValue.builder().s(userId).build());
+        Map<String, AttributeValue> eav = Map.of(":user_id", AttributeValue.builder().s(userId).build());
 
         QueryRequest queryRequest = QueryRequest.builder()
                 .tableName(TABLE_NAME)
-                .indexName("userId-index")
-                .keyConditionExpression("userId = :userId")
+                .indexName("user_id-index")
+                .keyConditionExpression("user_id = :user_id")
                 .expressionAttributeValues(eav)
                 .build();
 
@@ -70,19 +82,26 @@ public class JobRepository {
         }
     }
 
-    public void updateJob(String uuid, String newUserData) {
-        try {
-            UpdateItemRequest request = UpdateItemRequest.builder()
-                    .tableName(TABLE_NAME)
-                    .key(Map.of(PK_COLUMN, AttributeValue.builder().s(uuid).build()))
-                    .updateExpression("SET #data = :newData")
-                    .expressionAttributeNames(Map.of("#data", DATA_COLUMN))
-                    .expressionAttributeValues(Map.of(":newData", AttributeValue.builder().s(newUserData).build()))
-                    .build();
-            dynamoDbClient.updateItem(request);
-        } catch (DynamoDbException e) {
-            throw new RuntimeException("Error updating user: " + e.getMessage(), e);
+    public void updateJob(String uuid, Map<String, AttributeValue> updatedFields) {
+        StringBuilder updateExpression = new StringBuilder("SET ");
+
+        Map<String, AttributeValue> expressionAttributeValues = new HashMap<>();
+        List<String> expressions = new ArrayList<>();
+        for (Map.Entry<String, AttributeValue> entry : updatedFields.entrySet()) {
+            String fieldName = entry.getKey();
+            AttributeValue value = entry.getValue();
+            expressions.add(fieldName + " = :" + fieldName);
+            expressionAttributeValues.put(":" + fieldName, value);
         }
+        updateExpression.append(String.join(", ", expressions));
+
+        UpdateItemRequest request = UpdateItemRequest.builder()
+                .tableName(TABLE_NAME)
+                .key(Map.of(PK_COLUMN, AttributeValue.builder().s(uuid).build()))
+                .updateExpression(updateExpression.toString())
+                .expressionAttributeValues(expressionAttributeValues)
+                .build();
+        dynamoDbClient.updateItem(request);
     }
 
     public void deleteJob(String jobId, String userId) {
