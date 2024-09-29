@@ -1,10 +1,7 @@
 package com.fakru.interview.tracker.repository;
 
+import com.fakru.interview.tracker.dynamodata.Interview;
 import com.fakru.interview.tracker.dynamodata.Job;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
@@ -19,20 +16,19 @@ public class JobRepository {
 
     private static final String TABLE_NAME = "job";
     private static final String PK_COLUMN = "pk";
-    private static final String DATA_COLUMN = "data";
+    private static final String SK_COLUMN = "sk";
     private static final String GSI_USER_ID_COLUMN = "user_id";
     private final DynamoDbClient dynamoDbClient;
-    private final ObjectMapper objectMapper;
 
     public JobRepository(DynamoDbClient dynamoDbClient) {
         this.dynamoDbClient = dynamoDbClient;
-        this.objectMapper = new ObjectMapper();
     }
 
     public void saveJob(String uuid, Job job) {
         try {
             Map<String, AttributeValue> item = new HashMap<>();
             item.put(PK_COLUMN, AttributeValue.builder().s(uuid).build());
+            item.put(SK_COLUMN, AttributeValue.builder().n(String.valueOf(0)).build());
             item.put(GSI_USER_ID_COLUMN, AttributeValue.builder().s(job.getUserId()).build());
 
             item.put("company", AttributeValue.builder().s(job.getCompany()).build());
@@ -82,7 +78,7 @@ public class JobRepository {
         }
     }
 
-    public void updateJob(String uuid, Map<String, AttributeValue> updatedFields) {
+    public UpdateItemResponse updateJob(String uuid, Map<String, AttributeValue> updatedFields) {
         StringBuilder updateExpression = new StringBuilder("SET ");
 
         Map<String, AttributeValue> expressionAttributeValues = new HashMap<>();
@@ -101,7 +97,7 @@ public class JobRepository {
                 .updateExpression(updateExpression.toString())
                 .expressionAttributeValues(expressionAttributeValues)
                 .build();
-        dynamoDbClient.updateItem(request);
+        return dynamoDbClient.updateItem(request);
     }
 
     public void deleteJob(String jobId, String userId) {
@@ -121,48 +117,45 @@ public class JobRepository {
         }
     }
 
-    public void appendInterviewRoundPutItem(String uuid, String newRoundJson) {
+    public void saveInterview(String userId, String jobId, short roundCount, Interview interview) {
         try {
-            // First, get the current item
-            GetItemRequest getItemRequest = GetItemRequest.builder()
-                    .tableName(TABLE_NAME)
-                    .key(Map.of(PK_COLUMN, AttributeValue.builder().s(uuid).build()))
-                    .build();
+            Map<String, AttributeValue> item = new HashMap<>();
+            item.put(PK_COLUMN, AttributeValue.builder().s(jobId).build());
+            item.put(SK_COLUMN, AttributeValue.builder().n(String.valueOf(roundCount)).build());
+            item.put(GSI_USER_ID_COLUMN, AttributeValue.builder().s(userId).build());
 
-            Map<String, AttributeValue> item = dynamoDbClient.getItem(getItemRequest).item();
+            item.put("round_name", AttributeValue.builder().s(interview.getRoundName()).build());
+            item.put("description", AttributeValue.builder().s(interview.getDescription()).build());
+            item.put("interview_date_time", AttributeValue.builder().n(String.valueOf(interview.getInterviewDateTime().getTime())).build());
 
-            if (item == null) {
-                throw new RuntimeException("Job not found");
-            }
-
-            // Parse and update the JSON data
-            String existingDataJson = item.get(DATA_COLUMN).s();
-            JsonNode existingDataNode = objectMapper.readTree(existingDataJson);
-
-            if (!existingDataNode.has("rounds") || !existingDataNode.get("rounds").isArray()) {
-                ((ObjectNode) existingDataNode).putArray("rounds");
-            }
-
-            ArrayNode roundsArray = (ArrayNode) existingDataNode.get("rounds");
-            roundsArray.add(objectMapper.readTree(newRoundJson));
-
-            String updatedDataJson = objectMapper.writeValueAsString(existingDataNode);
-
-            // Prepare the new item with all existing attributes
-            Map<String, AttributeValue> newItem = new HashMap<>(item);
-            newItem.put(DATA_COLUMN, AttributeValue.builder().s(updatedDataJson).build());
-
-            // Use PutItemRequest to replace the entire item
             PutItemRequest putRequest = PutItemRequest.builder()
-                    .tableName(TABLE_NAME)
-                    .item(newItem)
-                    .conditionExpression("attribute_exists(#pk)")
-                    .expressionAttributeNames(Map.of("#pk", PK_COLUMN))
+                    .tableName("job")
+                    .item(item)
+                    .conditionExpression("attribute_not_exists(#pk) AND attribute_not_exists(#sk)")
+                    .expressionAttributeNames(Map.of("#pk", PK_COLUMN, "#sk", SK_COLUMN))
                     .build();
 
             dynamoDbClient.putItem(putRequest);
-        } catch (Exception e) {
-            throw new RuntimeException("Error appending interview round: " + e.getMessage(), e);
+            System.out.println("Interview round saved successfully.");
+        } catch (ConditionalCheckFailedException e) {
+            System.out.println("An interview round with this job ID and round count already exists.");
+        } catch (DynamoDbException e) {
+            throw new RuntimeException("Error while saving interview for user id: " + userId + ", job id: " + jobId, e);
+        }
+    }
+
+    public QueryResponse listInterviews(String jobId) {
+        try {
+            QueryRequest request = QueryRequest.builder()
+                    .tableName(TABLE_NAME)
+                    .keyConditionExpression(PK_COLUMN + " = :jobId")
+                    .expressionAttributeValues(Map.of(
+                            ":jobId", AttributeValue.builder().s(jobId).build()))
+                    .build();
+
+            return dynamoDbClient.query(request);
+        } catch (DynamoDbException e) {
+            throw new RuntimeException("Error retrieving jobs for the job id: " + jobId + " " + e.getMessage(), e);
         }
     }
 }

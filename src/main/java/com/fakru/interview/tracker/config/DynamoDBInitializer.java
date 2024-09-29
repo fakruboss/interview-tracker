@@ -65,9 +65,13 @@ public class DynamoDBInitializer {
             CreateTableRequest request = CreateTableRequest.builder()
                     .tableName("job")
                     .keySchema(KeySchemaElement.builder()
-                            .attributeName("pk")
-                            .keyType(KeyType.HASH)
-                            .build())
+                                    .attributeName("pk")
+                                    .keyType(KeyType.HASH)
+                                    .build(),
+                            KeySchemaElement.builder()
+                                    .attributeName("sk")
+                                    .keyType(KeyType.RANGE)
+                                    .build())
                     .attributeDefinitions(
                             AttributeDefinition.builder()
                                     .attributeName("pk")
@@ -75,7 +79,7 @@ public class DynamoDBInitializer {
                                     .build(),
                             AttributeDefinition.builder()
                                     .attributeName("sk")
-                                    .attributeType(ScalarAttributeType.S)
+                                    .attributeType(ScalarAttributeType.N)
                                     .build(),
                             AttributeDefinition.builder()
                                     .attributeName("user_id")
@@ -89,21 +93,6 @@ public class DynamoDBInitializer {
                                             .attributeName("user_id")
                                             .keyType(KeyType.HASH)
                                             .build())
-                                    .projection(Projection.builder()
-                                            .projectionType(ProjectionType.ALL)
-                                            .build())
-                                    .build(),
-                            GlobalSecondaryIndex.builder()
-                                    .indexName("pk-sk-index")
-                                    .keySchema(
-                                            KeySchemaElement.builder()
-                                                    .attributeName("pk")
-                                                    .keyType(KeyType.HASH)
-                                                    .build(),
-                                            KeySchemaElement.builder()
-                                                    .attributeName("sk")
-                                                    .keyType(KeyType.RANGE)
-                                                    .build())
                                     .projection(Projection.builder()
                                             .projectionType(ProjectionType.ALL)
                                             .build())

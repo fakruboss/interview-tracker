@@ -83,6 +83,7 @@ public class UserRepository {
     public Map<String, AttributeValue> findByEmail(String email) {
         Map<String, AttributeValue> eav = Map.of(":email", AttributeValue.builder().s(email).build());
 
+        // TODO: change to GetItemRequest
         QueryRequest queryRequest = QueryRequest.builder()
                 .tableName(TABLE_NAME)
                 .indexName("email-index")

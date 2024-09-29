@@ -10,6 +10,7 @@ import java.sql.Timestamp;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AddInterviewRequest {
+    private short roundCount;
     private String roundName;
     private String description;
     private Timestamp interviewDateTime;

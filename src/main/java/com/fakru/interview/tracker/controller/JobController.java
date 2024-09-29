@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.services.dynamodb.model.UpdateItemResponse;
 
 import java.io.IOException;
 import java.util.List;
@@ -52,7 +53,7 @@ public class JobController {
     @JwtAuthenticate
     @PutMapping("api/v1/jobs")
     public ResponseEntity<Map<String, String>> updateJob(@RequestBody UpdateJobRequest request) {
-        jobService.updateJob(request);
+        UpdateItemResponse updateItemResponse = jobService.updateJob(request);
         return new ResponseEntity<>(Map.of(MESSAGE, "Job updated successfully"), HttpStatus.OK);
     }
 
