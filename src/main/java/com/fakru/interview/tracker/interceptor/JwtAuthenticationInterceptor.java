@@ -9,13 +9,10 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
-import org.springframework.web.servlet.ModelAndView;
 import util.JwtAuthenticationHandler;
 
 import java.io.IOException;
 import java.util.Map;
-
-import static com.fakru.interview.tracker.constants.ApiConstants.JWT_CLAIMS;
 
 @Component
 public class JwtAuthenticationInterceptor implements HandlerInterceptor {
@@ -30,17 +27,40 @@ public class JwtAuthenticationInterceptor implements HandlerInterceptor {
     }
 
     private String extractHeader(String headerName) {
-        return ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
-                .getRequest().getHeader(headerName);
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes == null) {
+            // Handle the case when there are no request attributes
+            // You might want to log this or throw a custom exception
+            throw new IllegalStateException("No request attributes found");
+        }
+        HttpServletRequest request = attributes.getRequest();
+        return request.getHeader(headerName);
     }
 
     private Void handleError(Map<String, Object> errorDetails) {
-        HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
-                .getResponse();
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes == null) {
+            throw new IllegalStateException("No request attributes found");
+        }
+
+        HttpServletResponse response = attributes.getResponse();
+        if (response == null) {
+            throw new IllegalStateException("No response object found");
+        }
+
+        Integer status = (Integer) errorDetails.get("status");
+        String message = (String) errorDetails.get("message");
+
+        if (status == null || message == null) {
+            throw new IllegalArgumentException("Invalid error details provided");
+        }
+
         try {
-            response.sendError((Integer) errorDetails.get("status"), (String) errorDetails.get("message"));
+            response.sendError(status, message);
         } catch (IOException e) {
-            // Handle exception
+            // Log the exception
+            // You might want to rethrow or handle this exception based on your requirements
+            throw new RuntimeException("Failed to send error response", e);
         }
         return null;
     }
@@ -51,24 +71,14 @@ public class JwtAuthenticationInterceptor implements HandlerInterceptor {
             JwtAuthenticate jwtAuthenticate = handlerMethod.getMethodAnnotation(JwtAuthenticate.class);
 
             if (jwtAuthenticate != null) {
-                JWTClaimsSet claimsSet = jwtHandler.authenticate(Map.of("request", request));
+                JWTClaimsSet claimsSet = jwtHandler.authenticate();
                 if (claimsSet != null) {
-                    request.setAttribute(JWT_CLAIMS, claimsSet);
+                    request.setAttribute("jwtClaims", claimsSet);
                     return true;
                 }
                 return false;
             }
         }
         return true;
-    }
-
-    @Override
-    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler,
-                           ModelAndView modelAndView) throws Exception {
-        JWTClaimsSet claimsSet = (JWTClaimsSet) request.getAttribute(JWT_CLAIMS);
-        String newToken = jwtHandler.refreshToken(claimsSet);
-        if (newToken != null) {
-            response.setHeader("Authorization", "Bearer " + newToken);
-        }
     }
 }

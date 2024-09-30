@@ -5,7 +5,6 @@ import com.fakru.interview.tracker.model.request.RegisterUserRequest;
 import com.fakru.interview.tracker.model.request.UserLoginRequest;
 import com.fakru.interview.tracker.model.request.ValidateOTPRequest;
 import com.fakru.interview.tracker.service.UserService;
-import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.JWTClaimsSet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,6 +21,7 @@ import java.util.UUID;
 
 import static com.fakru.interview.tracker.constants.ApiConstants.JWT_CLAIMS;
 import static com.fakru.interview.tracker.constants.ApiConstants.MESSAGE;
+import static org.apache.http.HttpHeaders.AUTHORIZATION;
 
 @RestController
 @Slf4j
@@ -38,16 +38,15 @@ public class UserController {
     public ResponseEntity<Map<String, String>> createUser(@RequestBody RegisterUserRequest registerUserRequest,
                                                           HttpServletResponse response) {
         String token = userService.createUser(registerUserRequest);
-        response.setHeader("Authorization", "Bearer " + token);
+        response.setHeader(AUTHORIZATION, "Bearer " + token);
         return new ResponseEntity<>(Map.of(MESSAGE, "user registered successfully"), HttpStatus.OK);
     }
 
     @PostMapping("/api/v1/user/login")
     public ResponseEntity<Map<String, String>> loginUser(@RequestBody UserLoginRequest userLoginRequest,
-                                                         HttpServletResponse response)
-            throws JOSEException {
+                                                         HttpServletResponse response) {
         String token = userService.loginUser(userLoginRequest.getEmail(), userLoginRequest.getPassword());
-        response.setHeader("Authorization", "Bearer " + token);
+        response.setHeader(AUTHORIZATION, "Bearer " + token);
         return new ResponseEntity<>(Map.of(MESSAGE, "login successful"), HttpStatus.OK);
     }
 

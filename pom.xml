@@ -91,7 +91,7 @@
             <version>2.20.8</version> <!-- Use the latest version -->
         </dependency>
 
-        <!-- Spring Data for DynamoDB -->
+        <!--        this dep has last release on jan, 2019. check & replace -->
         <dependency>
             <groupId>com.github.derjust</groupId>
             <artifactId>spring-data-dynamodb</artifactId>
@@ -107,7 +107,7 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20230227</version>
+            <version>20240303</version>
         </dependency>
         <dependency>
             <groupId>org.aspectj</groupId>
@@ -121,7 +121,7 @@
         <dependency>
             <groupId>com.fakru</groupId>
             <artifactId>fakru-commons</artifactId>
-            <version>1.0.20240928101640</version>
+            <version>1.0.20240930153651</version>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>

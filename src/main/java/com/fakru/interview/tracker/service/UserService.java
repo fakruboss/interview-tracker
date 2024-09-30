@@ -6,7 +6,7 @@ import com.fakru.interview.tracker.exception.IncorrectPasswordException;
 import com.fakru.interview.tracker.exception.UserCreationFailedException;
 import com.fakru.interview.tracker.model.request.RegisterUserRequest;
 import com.fakru.interview.tracker.repository.UserRepository;
-import com.nimbusds.jose.JOSEException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import service.PasswordService;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class UserService {
 
     private final PasswordService passwordService;
@@ -33,6 +34,7 @@ public class UserService {
 
     @LogExecutionTime
     public String createUser(RegisterUserRequest registerUserRequest) {
+        String pk = UUID.randomUUID().toString();
         try {
             long currentTimeMillis = System.currentTimeMillis();
             Timestamp currentTs = new Timestamp(currentTimeMillis);
@@ -52,20 +54,19 @@ public class UserService {
                     .createdAt(currentTs)
                     .updatedAt(currentTs)
                     .build();
-            String pk = UUID.randomUUID().toString();
             userRepository.saveUser(pk, user);
-            return JoseJwtUtil.generateToken(pk, new HashMap<>());
         } catch (Exception e) {
             throw new UserCreationFailedException(e.getMessage());
         }
+        return JoseJwtUtil.generateSafeToken(pk);
     }
 
-    public String loginUser(String email, String password) throws JOSEException {
+    public String loginUser(String email, String password) {
         Map<String, AttributeValue> items = userRepository.findByEmail(email);
         String passwordHash = items.get("password_hash").s();
         boolean doesPasswordsMatch = passwordService.verifyPassword(password, passwordHash);
         if (doesPasswordsMatch) {
-            return JoseJwtUtil.generateToken(items.get("pk").s());
+            return JoseJwtUtil.generateSafeToken(items.get("pk").s());
         } else {
             throw new IncorrectPasswordException("Incorrect password");
         }

@@ -78,7 +78,7 @@ public class JobRepository {
         }
     }
 
-    public UpdateItemResponse updateJob(String uuid, Map<String, AttributeValue> updatedFields) {
+    public void updateJob(String uuid, Map<String, AttributeValue> updatedFields) {
         StringBuilder updateExpression = new StringBuilder("SET ");
 
         Map<String, AttributeValue> expressionAttributeValues = new HashMap<>();
@@ -97,7 +97,7 @@ public class JobRepository {
                 .updateExpression(updateExpression.toString())
                 .expressionAttributeValues(expressionAttributeValues)
                 .build();
-        return dynamoDbClient.updateItem(request);
+        dynamoDbClient.updateItem(request);
     }
 
     public void deleteJob(String jobId, String userId) {
