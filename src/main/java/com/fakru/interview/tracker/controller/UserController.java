@@ -67,10 +67,22 @@ public class UserController {
         return new ResponseEntity<>(Map.of(MESSAGE, message), status);
     }
 
-    // TODO: handle reset password
+    @PostMapping("/api/v1/user/initiatePasswordReset")
+    public ResponseEntity<Map<String, String>> initiatePasswordReset(@RequestBody String email) {
+        userService.generatePasswordResetLink(email);
+        String message = "Password reset link has been sent to the provided mail id";
+        return new ResponseEntity<>(Map.of(MESSAGE, message), HttpStatus.OK);
+    }
+
+    @JwtAuthenticate
     @PostMapping("/api/v1/user/resetPassword")
-    public ResponseEntity<Void> resetPassword(@RequestBody UserLoginRequest userLoginRequest,
-                                              HttpServletResponse response) {
-        return new ResponseEntity<>(HttpStatus.OK);
+    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody String newPassword,
+                                                             HttpServletRequest httpRequest,
+                                                             HttpServletResponse httpResponse) {
+        JWTClaimsSet claimsSet = (JWTClaimsSet) httpRequest.getAttribute(JWT_CLAIMS);
+        String token = userService.resetPassword(claimsSet.getSubject(), newPassword);
+        String message = "Password reset link has been sent to the provided mail id";
+        httpResponse.setHeader(AUTHORIZATION, token);
+        return new ResponseEntity<>(Map.of(MESSAGE, message), HttpStatus.OK);
     }
 }

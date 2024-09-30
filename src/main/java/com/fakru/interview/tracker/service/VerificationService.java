@@ -1,13 +1,11 @@
 package com.fakru.interview.tracker.service;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 
 @Service
-@Slf4j
 public class VerificationService {
 
     private static final SecureRandom secureRandom = new SecureRandom();
@@ -27,12 +25,19 @@ public class VerificationService {
     }
 
     public String sendVerifyEmailMessage(String toEmail) {
-        log.info("sendVerifyEmailMessage in thread: {}", Thread.currentThread().getName());
         String otp = generateOTP();
         emailService.sendEmail(toEmail,
                 "Use this OTP to validate email : " + otp + ". This OTP expires in 10 minutes",
                 "Interview Tracker - Verify your email"
         );
         return otp;
+    }
+
+    public void sendPasswordResetEmail(String toEmail, String token) {
+        String url = "http://localhost:8080/passwordReset?token=" + token;
+        emailService.sendEmail(toEmail,
+                "Click the below link to reset the password. This OTP expires in 10 minutes. Link : " + url,
+                "Interview Tracker - Password reset"
+        );
     }
 }

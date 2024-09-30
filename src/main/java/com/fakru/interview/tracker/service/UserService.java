@@ -93,4 +93,22 @@ public class UserService {
         userRepository.updateUser(userId.toString(), updatedItem);
         return "OTP verified";
     }
+
+    public void generatePasswordResetLink(String email) {
+        Map<String, AttributeValue> items = userRepository.findByEmail(email);
+        String userId = items.get("pk").s();
+        String token = JoseJwtUtil.generateSafeTokenWithExpiryTime(userId, new HashMap<>(), 60 * 24);
+        verificationService.sendPasswordResetEmail(email, token);
+    }
+
+    //TODO: once password is changed, the current tokens has to be invalidated
+    public String resetPassword(String userId, String password) {
+        Map<String, AttributeValue> updatedItem = new HashMap<>();
+        updatedItem.put("is_email_validated", AttributeValue.builder().bool(true).build());
+        updatedItem.put("password", AttributeValue.builder().s(passwordService.hashPassword(password)).build());
+        updatedItem.put("updated_at", AttributeValue.builder().n(String.valueOf(System.currentTimeMillis())).build());
+        userRepository.updateUser(userId, updatedItem);
+
+        return JoseJwtUtil.generateSafeToken(userId);
+    }
 }
