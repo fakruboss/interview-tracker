@@ -51,6 +51,7 @@ public class UserService {
                     .isEmailValidated(false)
                     .otpHash(passwordService.hashPassword(otp))
                     .otpExpiryTime(new Timestamp(calendar.getTimeInMillis()))
+                    .tokenVersion(1)
                     .createdAt(currentTs)
                     .updatedAt(currentTs)
                     .build();
@@ -66,7 +67,8 @@ public class UserService {
         String passwordHash = items.get("password_hash").s();
         boolean doesPasswordsMatch = passwordService.verifyPassword(password, passwordHash);
         if (doesPasswordsMatch) {
-            return JoseJwtUtil.generateSafeToken(items.get("pk").s());
+            return JoseJwtUtil.generateSafeToken(items.get("pk").s(),
+                    Map.of("tokenVersion", Integer.parseInt(items.get("token_version").n())));
         } else {
             throw new IncorrectPasswordException("Incorrect password");
         }

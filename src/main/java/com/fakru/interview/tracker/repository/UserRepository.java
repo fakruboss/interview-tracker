@@ -37,17 +37,18 @@ public class UserRepository {
             item.put("created_at", AttributeValue.builder().n(String.valueOf(user.getCreatedAt().getTime())).build());
             item.put("updated_at", AttributeValue.builder().n(String.valueOf(user.getUpdatedAt().getTime())).build());
             item.put("otp_expiry_time", AttributeValue.builder().n(String.valueOf(user.getOtpExpiryTime().getTime())).build());
+            item.put("token_version", AttributeValue.builder().n(String.valueOf(user.getTokenVersion())).build());
 
-            if (StringUtils.isEmpty(user.getName())) {
+            if (StringUtils.isNonEmpty(user.getName())) {
                 item.put("name", AttributeValue.builder().s(user.getName()).build());
             }
-            if (StringUtils.isEmpty(user.getPhoneNumber())) {
+            if (StringUtils.isNonEmpty(user.getPhoneNumber())) {
                 item.put("phone_number", AttributeValue.builder().s(String.valueOf(user.getPhoneNumber())).build());
             }
-            if (StringUtils.isEmpty(user.getPasswordHash())) {
+            if (StringUtils.isNonEmpty(user.getPasswordHash())) {
                 item.put("password_hash", AttributeValue.builder().s(user.getPasswordHash()).build());
             }
-            if (StringUtils.isEmpty(user.getOtpHash())) {
+            if (StringUtils.isNonEmpty(user.getOtpHash())) {
                 item.put("otp_hash", AttributeValue.builder().s(user.getOtpHash()).build());
             }
 

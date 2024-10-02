@@ -91,7 +91,7 @@
             <version>2.20.8</version> <!-- Use the latest version -->
         </dependency>
 
-        <!--        this dep has last release on jan, 2019. check & replace -->
+        <!-- this dep has last release on jan, 2019. check & replace -->
         <dependency>
             <groupId>com.github.derjust</groupId>
             <artifactId>spring-data-dynamodb</artifactId>
@@ -121,13 +121,19 @@
         <dependency>
             <groupId>com.fakru</groupId>
             <artifactId>fakru-commons</artifactId>
-            <version>1.0.20240930173146</version>
+            <version>1.0.20241002070733</version>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>2.6.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>3.1.8</version>
+        </dependency>
+
     </dependencies>
 
     <build>

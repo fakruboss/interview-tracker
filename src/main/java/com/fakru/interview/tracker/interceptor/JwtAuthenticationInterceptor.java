@@ -1,9 +1,11 @@
 package com.fakru.interview.tracker.interceptor;
 
 import com.fakru.interview.tracker.annotation.JwtAuthenticate;
+import com.fakru.interview.tracker.service.TokenVersionService;
 import com.nimbusds.jwt.JWTClaimsSet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -13,13 +15,17 @@ import util.JwtAuthenticationHandler;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 
 @Component
 public class JwtAuthenticationInterceptor implements HandlerInterceptor {
 
     private final JwtAuthenticationHandler jwtHandler;
+    private final TokenVersionService tokenVersionService;
 
-    public JwtAuthenticationInterceptor() {
+    @Autowired
+    public JwtAuthenticationInterceptor(TokenVersionService tokenVersionService) {
+        this.tokenVersionService = tokenVersionService;
         this.jwtHandler = new JwtAuthenticationHandler(
                 this::extractHeader,
                 this::handleError
@@ -73,6 +79,7 @@ public class JwtAuthenticationInterceptor implements HandlerInterceptor {
             if (jwtAuthenticate != null) {
                 JWTClaimsSet claimsSet = jwtHandler.authenticate();
                 if (claimsSet != null) {
+                    validateTokenVersion(claimsSet);
                     request.setAttribute("jwtClaims", claimsSet);
                     return true;
                 }
@@ -80,5 +87,16 @@ public class JwtAuthenticationInterceptor implements HandlerInterceptor {
             }
         }
         return true;
+    }
+
+    private void validateTokenVersion(JWTClaimsSet claimsSet) {
+        String userId = claimsSet.getSubject();
+        Map<String, Object> claims = claimsSet.getClaims();
+        Long claimTokenVersion = (Long) ((Map<String, Object>) claims.get("items")).get("tokenVersion");
+        Long cachedTokenVersion = tokenVersionService.getTokenVersion(userId);
+
+        if (!Objects.equals(claimTokenVersion, cachedTokenVersion)) {
+            throw new RuntimeException("Invalid token because of password reset. re-login & try again");
+        }
     }
 }

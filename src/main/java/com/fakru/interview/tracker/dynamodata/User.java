@@ -15,6 +15,7 @@ public class User {
     private boolean isEmailValidated;
     private String otpHash;
     private Timestamp otpExpiryTime;
+    private long tokenVersion;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 }
