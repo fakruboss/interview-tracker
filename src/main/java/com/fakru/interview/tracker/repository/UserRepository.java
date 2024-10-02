@@ -2,6 +2,8 @@ package com.fakru.interview.tracker.repository;
 
 import com.fakru.interview.tracker.annotation.LogExecutionTime;
 import com.fakru.interview.tracker.dynamodata.User;
+import com.fakru.interview.tracker.exception.DatabaseOperationException;
+import com.fakru.interview.tracker.exception.UserNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
@@ -59,7 +61,7 @@ public class UserRepository {
 
             dynamoDbClient.putItem(request);
         } catch (DynamoDbException e) {
-            throw new RuntimeException("Error saving user: " + e.getMessage(), e);
+            throw new DatabaseOperationException("Error saving user: " + e.getMessage(), e);
         }
     }
 
@@ -74,10 +76,10 @@ public class UserRepository {
             if (response.hasItem()) {
                 return response.item();
             } else {
-                throw new RuntimeException("User not found");
+                throw new UserNotFoundException("No such user exists !!");
             }
         } catch (DynamoDbException e) {
-            throw new RuntimeException("Error retrieving user: " + e.getMessage(), e);
+            throw new DatabaseOperationException("Error retrieving user: " + e.getMessage(), e);
         }
     }
 
@@ -95,22 +97,39 @@ public class UserRepository {
         if (!response.items().isEmpty()) {
             return response.items().get(0);
         } else {
-            throw new RuntimeException("User with email " + email + " not found");
+            throw new UserNotFoundException("User with email " + email + " not found");
         }
     }
 
-    public void updateUser(String uuid, Map<String, AttributeValue> updatedFields) {
-        StringBuilder updateExpression = new StringBuilder("SET ");
-
+    public void updateUser(String uuid, Map<String, AttributeValue> setFields,
+                           Map<String, AttributeValue> addFields) {
+        StringBuilder updateExpression = new StringBuilder();
         Map<String, AttributeValue> expressionAttributeValues = new HashMap<>();
-        List<String> expressions = new ArrayList<>();
-        for (Map.Entry<String, AttributeValue> entry : updatedFields.entrySet()) {
-            String fieldName = entry.getKey();
-            AttributeValue value = entry.getValue();
-            expressions.add(fieldName + " = :" + fieldName);
-            expressionAttributeValues.put(":" + fieldName, value);
+
+        if (!setFields.isEmpty()) {
+            updateExpression.append("SET ");
+            List<String> setExpressions = new ArrayList<>();
+            for (Map.Entry<String, AttributeValue> entry : setFields.entrySet()) {
+                String fieldName = entry.getKey();
+                setExpressions.add(fieldName + " = :" + fieldName);
+                expressionAttributeValues.put(":" + fieldName, entry.getValue());
+            }
+            updateExpression.append(String.join(", ", setExpressions));
         }
-        updateExpression.append(String.join(", ", expressions));
+
+        if (!addFields.isEmpty()) {
+            if (!updateExpression.isEmpty()) {
+                updateExpression.append(" ");
+            }
+            updateExpression.append("ADD ");
+            List<String> addExpressions = new ArrayList<>();
+            for (Map.Entry<String, AttributeValue> entry : addFields.entrySet()) {
+                String fieldName = entry.getKey();
+                addExpressions.add(fieldName + " :" + fieldName + "Add");
+                expressionAttributeValues.put(":" + fieldName + "Add", entry.getValue());
+            }
+            updateExpression.append(String.join(", ", addExpressions));
+        }
 
         UpdateItemRequest request = UpdateItemRequest.builder()
                 .tableName(TABLE_NAME)

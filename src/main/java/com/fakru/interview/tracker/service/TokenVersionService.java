@@ -8,6 +8,7 @@ import org.springframework.cache.CacheManager;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -24,6 +25,13 @@ public class TokenVersionService {
         this.userRepository = userRepository;
     }
 
+    public void invalidateTokenVersion(String userId) {
+        Cache cache = getCache();
+        if (cache != null) {
+            cache.evict(userId);
+        }
+    }
+
     public void cacheTokenVersion(String userId, Long tokenVersion) {
         getCache().put(userId, tokenVersion);
         log.debug("Cached token version {} for user {}", tokenVersion, userId);
@@ -31,14 +39,15 @@ public class TokenVersionService {
 
     public Long getTokenVersion(String userId) {
         Cache cache = getCache();
+        if (cache != null) {
+
         Long cachedVersion = cache.get(userId, Long.class);
 
-        if (cachedVersion != null) {
-            return cachedVersion;
-        }
+            return Objects.requireNonNullElseGet(cachedVersion, () -> fetchAndCacheTokenVersion(userId));
 
-        // Cache miss - fetch from DynamoDB and update cache
-        return fetchAndCacheTokenVersion(userId);
+            // Cache miss - fetch from DynamoDB and update cache
+        }
+        return 0L;
     }
 
     @Async

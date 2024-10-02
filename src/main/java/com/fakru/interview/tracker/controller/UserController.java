@@ -81,8 +81,8 @@ public class UserController {
                                                              HttpServletResponse httpResponse) {
         JWTClaimsSet claimsSet = (JWTClaimsSet) httpRequest.getAttribute(JWT_CLAIMS);
         String token = userService.resetPassword(claimsSet.getSubject(), newPassword);
-        String message = "Password reset link has been sent to the provided mail id";
-        httpResponse.setHeader(AUTHORIZATION, token);
+        String message = "Password has been reset successfully";
+        httpResponse.setHeader(AUTHORIZATION, "Bearer " + token);
         return new ResponseEntity<>(Map.of(MESSAGE, message), HttpStatus.OK);
     }
 }

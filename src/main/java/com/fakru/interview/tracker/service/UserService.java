@@ -25,11 +25,14 @@ public class UserService {
     private final PasswordService passwordService;
     private final VerificationService verificationService;
     private final UserRepository userRepository;
+    private final TokenVersionService tokenVersionService;
 
-    public UserService(UserRepository userRepository, PasswordService passwordService, VerificationService verificationService) {
+    public UserService(UserRepository userRepository, PasswordService passwordService,
+                       VerificationService verificationService, TokenVersionService tokenVersionService) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.verificationService = verificationService;
+        this.tokenVersionService = tokenVersionService;
     }
 
     @LogExecutionTime
@@ -92,7 +95,7 @@ public class UserService {
         updatedItem.put("otp_expiry_time", AttributeValue.builder().n(String.valueOf(0L)).build());
         updatedItem.put("updated_at", AttributeValue.builder().n(String.valueOf(System.currentTimeMillis())).build());
 
-        userRepository.updateUser(userId.toString(), updatedItem);
+        userRepository.updateUser(userId.toString(), updatedItem, new HashMap<>());
         return "OTP verified";
     }
 
@@ -103,13 +106,17 @@ public class UserService {
         verificationService.sendPasswordResetEmail(email, token);
     }
 
-    //TODO: once password is changed, the current tokens has to be invalidated
     public String resetPassword(String userId, String password) {
-        Map<String, AttributeValue> updatedItem = new HashMap<>();
-        updatedItem.put("is_email_validated", AttributeValue.builder().bool(true).build());
-        updatedItem.put("password", AttributeValue.builder().s(passwordService.hashPassword(password)).build());
-        updatedItem.put("updated_at", AttributeValue.builder().n(String.valueOf(System.currentTimeMillis())).build());
-        userRepository.updateUser(userId, updatedItem);
+        Map<String, AttributeValue> setFields = new HashMap<>();
+        setFields.put("is_email_validated", AttributeValue.builder().bool(true).build());
+        setFields.put("password", AttributeValue.builder().s(passwordService.hashPassword(password)).build());
+        setFields.put("updated_at", AttributeValue.builder().n(String.valueOf(System.currentTimeMillis())).build());
+
+        Map<String, AttributeValue> addFields = new HashMap<>();
+        addFields.put("token_version", AttributeValue.builder().n("1").build());
+
+        userRepository.updateUser(userId, setFields, addFields);
+        tokenVersionService.invalidateTokenVersion(userId);
 
         return JoseJwtUtil.generateSafeToken(userId);
     }
