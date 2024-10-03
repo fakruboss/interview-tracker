@@ -41,7 +41,7 @@ public class UserService {
         try {
             long currentTimeMillis = System.currentTimeMillis();
             Timestamp currentTs = new Timestamp(currentTimeMillis);
-            String otp = verificationService.sendVerifyEmailMessage(registerUserRequest.getEmail());
+            String otp = verificationService.sendVerifyEmailOTP(registerUserRequest.getEmail());
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(currentTimeMillis);
             calendar.add(Calendar.HOUR, 24);
