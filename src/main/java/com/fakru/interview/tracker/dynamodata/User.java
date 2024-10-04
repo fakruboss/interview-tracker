@@ -13,6 +13,7 @@ public class User {
     private String phoneNumber;
     private String passwordHash;
     private boolean isEmailValidated;
+    private boolean isPhoneValidated;
     private String otpHash;
     private Timestamp otpExpiryTime;
     private long tokenVersion;

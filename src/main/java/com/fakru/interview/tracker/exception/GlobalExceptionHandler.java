@@ -26,4 +26,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> dynamoDbError(DatabaseOperationException e) {
         return new ResponseEntity<>(Map.of(ERROR, e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @ExceptionHandler(VerificationException.class)
+    public ResponseEntity<Map<String, String>> otpVerificationError(VerificationException e) {
+        return new ResponseEntity<>(Map.of(ERROR, e.getMessage()), HttpStatus.BAD_REQUEST);
+    }
 }

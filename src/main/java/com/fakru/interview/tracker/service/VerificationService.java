@@ -31,7 +31,7 @@ public class VerificationService {
         return otp.toString();
     }
 
-    public String sendVerifyEmailOTP(String toEmail) {
+    public String sendEmailOTP(String toEmail) {
         String otp = generateOTP();
         emailService.sendEmail(toEmail,
                 "Use this OTP to validate email : " + otp + ". This OTP expires in 10 minutes",
