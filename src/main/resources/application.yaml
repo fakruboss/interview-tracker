@@ -1,0 +1,136 @@
+spring:
+  application:
+    name: "Interview Tracker"
+  servlet:
+    multipart:
+      enabled: true
+      file-size-threshold: 2MB
+      max-file-size: 3MB
+      max-request-size: 5MB
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username:
+    password: 
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
+server:
+  port: 8080
+
+# Directory where resumes will be stored locally
+resume:
+  upload:
+    dir: /Users/fakru/Documents/IntelliJ/interview-tracker-FS/resume
+
+# AWS Configuration
+cloud:
+  aws:
+    credentials:
+      access-key:
+      secret-key:
+    region:
+      static: ap-south-1
+    stack:
+      auto: false
+
+# Application Configuration
+application:
+  bucket:
+    name: interview-tracker-resumes
+
+# DynamoDB Configuration
+dynamodb:
+  local:
+    uri: http://localhost:8000
+
+# Twilio Configuration
+twilio:
+  account:
+    sid:
+  auth:
+    token:
+  service:
+    id:
+
+# rate limit for each API
+rateLimits:
+  - path: /api/v1/user/register
+    methods:
+      POST:
+        limit: 5
+        duration: 60
+
+  - path: /api/v1/user/login
+    methods:
+      POST:
+        limit: 10
+        duration: 60
+
+  - path: /api/v1/user/send/emailOtp
+    methods:
+      POST:
+        limit: 3
+        duration: 60
+
+  - path: /api/v1/user/verify/emailOtp
+    methods:
+      POST:
+        limit: 5
+        duration: 60
+
+  - path: /api/v1/user/initiatePasswordReset
+    methods:
+      POST:
+        limit: 3
+        duration: 60
+
+  - path: /api/v1/user/resetPassword
+    methods:
+      POST:
+        limit: 3
+        duration: 60
+
+  - path: /api/v1/user/send/PhoneOtp
+    methods:
+      POST:
+        limit: 3
+        duration: 60
+
+  - path: /api/v1/user/verify/PhoneOtp
+    methods:
+      POST:
+        limit: 5
+        duration: 60
+
+  - path: /api/v1/jobs
+    methods:
+      POST:
+        limit: 10
+        duration: 60
+      GET:
+        limit: 20
+        duration: 60
+      PUT:
+        limit: 10
+        duration: 60
+
+  - path: /api/v1/jobs/{jobId}
+    methods:
+      DELETE:
+        limit: 5
+        duration: 60
+
+  - path: /api/v1/jobs/{jobId}/interview
+    methods:
+      POST:
+        limit: 5
+        duration: 60
+      GET:
+        limit: 20
+        duration: 60

@@ -18,8 +18,7 @@ import util.JoseJwtUtil;
 import java.util.List;
 import java.util.Map;
 
-import static com.fakru.interview.tracker.constants.ApiConstants.JWT_CLAIMS;
-import static com.fakru.interview.tracker.constants.ApiConstants.MESSAGE;
+import static com.fakru.interview.tracker.constants.ApiConstants.*;
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
 
 @RestController
@@ -67,14 +66,19 @@ public class JobController {
     @JwtAuthenticate
     @DeleteMapping("api/v1/jobs/{jobId}")
     public ResponseEntity<String> deleteJob(@PathVariable String jobId,
-                                            HttpServletRequest httpRequest) {
+                                            HttpServletRequest httpRequest,
+                                            HttpServletResponse httpResponse) {
         JWTClaimsSet claimsSet = (JWTClaimsSet) httpRequest.getAttribute(JWT_CLAIMS);
-        jobService.deleteJob(claimsSet, jobId);
+        jobService.deleteJob(jobId, claimsSet.getSubject());
+        setTokenInResponseHeader((JWTClaimsSet) httpRequest.getAttribute(JWT_CLAIMS), httpResponse);
         return new ResponseEntity<>("Job deleted successfully", HttpStatus.OK);
     }
 
     private void setTokenInResponseHeader(JWTClaimsSet claimsSet, HttpServletResponse httpResponse) {
-        String token = JoseJwtUtil.generateSafeToken(claimsSet.getSubject(), claimsSet.getClaims());
-        httpResponse.setHeader(AUTHORIZATION, token);
+        Object items = claimsSet.getClaim("items");
+        if (items instanceof Map) {
+            String token = JoseJwtUtil.generateSafeToken(claimsSet.getSubject(), (Map<String, Object>) items);
+            httpResponse.setHeader(AUTHORIZATION, BEARER + token);
+        }
     }
 }

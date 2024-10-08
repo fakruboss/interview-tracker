@@ -120,6 +120,7 @@ public class JobService {
         List<JobsResponse> jobsResponses = new ArrayList<>();
         for (Map<String, AttributeValue> e : byUserId) {
             jobsResponses.add(JobsResponse.builder()
+                    .jobId(e.get("pk").s())
                     .company(e.get("company").s())
                     .position(e.get("position").s())
                     .location(e.get("location").s())
@@ -132,8 +133,7 @@ public class JobService {
         return jobsResponses;
     }
 
-    public void deleteJob(JWTClaimsSet claimsSet, String jobId) {
-        UUID userId = UUID.fromString(claimsSet.getSubject());
-        jobRepository.deleteJob(jobId, userId.toString());
+    public void deleteJob(String jobId, String userId) {
+        jobRepository.deleteJob(jobId, userId);
     }
 }

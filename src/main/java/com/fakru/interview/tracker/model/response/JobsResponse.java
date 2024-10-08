@@ -11,6 +11,7 @@ import java.sql.Timestamp;
 @AllArgsConstructor
 @Builder
 public class JobsResponse {
+    private String jobId;
     private String company;
     private String position;
     private String location;

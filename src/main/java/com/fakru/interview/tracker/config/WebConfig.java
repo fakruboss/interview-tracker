@@ -1,7 +1,7 @@
 package com.fakru.interview.tracker.config;
 
 import com.fakru.interview.tracker.interceptor.JwtAuthenticationInterceptor;
-import com.fakru.interview.tracker.interceptor.RateLimitingInterceptor;
+import com.fakru.interview.tracker.interceptor.DynamicRateLimitingInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -11,12 +11,12 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
 
     private final JwtAuthenticationInterceptor jwtAuthenticationInterceptor;
-    private final RateLimitingInterceptor rateLimitingInterceptor;
+    private final DynamicRateLimitingInterceptor dynamicRateLimitingInterceptor;
 
     public WebConfig(JwtAuthenticationInterceptor jwtAuthenticationInterceptor,
-                     RateLimitingInterceptor rateLimitingInterceptor) {
+                     DynamicRateLimitingInterceptor dynamicRateLimitingInterceptor) {
         this.jwtAuthenticationInterceptor = jwtAuthenticationInterceptor;
-        this.rateLimitingInterceptor = rateLimitingInterceptor;
+        this.dynamicRateLimitingInterceptor = dynamicRateLimitingInterceptor;
     }
 
     @Override
@@ -31,6 +31,6 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(jwtAuthenticationInterceptor).order(1);
-        registry.addInterceptor(rateLimitingInterceptor).order(2);
+        registry.addInterceptor(dynamicRateLimitingInterceptor).order(2);
     }
 }

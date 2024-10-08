@@ -1,7 +1,10 @@
 package com.fakru.interview.tracker.repository;
 
+import com.fakru.interview.tracker.annotation.LogExecutionTime;
 import com.fakru.interview.tracker.dynamodata.Interview;
 import com.fakru.interview.tracker.dynamodata.Job;
+import com.fakru.interview.tracker.exception.DatabaseOperationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
@@ -12,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 @Repository
+@Slf4j
 public class JobRepository {
 
     private static final String TABLE_NAME = "job";
@@ -56,7 +60,7 @@ public class JobRepository {
                     .build();
             dynamoDbClient.putItem(request);
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            throw new DatabaseOperationException(e.getMessage());
         }
     }
 
@@ -100,20 +104,43 @@ public class JobRepository {
         dynamoDbClient.updateItem(request);
     }
 
+    @LogExecutionTime
     public void deleteJob(String jobId, String userId) {
         try {
-            DeleteItemRequest request = DeleteItemRequest.builder()
+            // Step 1: Query all items with the given jobId (partition key)
+            QueryRequest queryRequest = QueryRequest.builder()
                     .tableName(TABLE_NAME)
-                    .key(Map.of(PK_COLUMN, AttributeValue.builder().s(jobId).build()))
-                    .conditionExpression("#userId = :userId")
-                    .expressionAttributeNames(Map.of("#userId", GSI_USER_ID_COLUMN))
+                    .keyConditionExpression(PK_COLUMN + " = :jobId")
+                    .filterExpression(GSI_USER_ID_COLUMN + " = :userId")
                     .expressionAttributeValues(Map.of(
+                            ":jobId", AttributeValue.builder().s(jobId).build(),
                             ":userId", AttributeValue.builder().s(userId).build()
                     ))
                     .build();
-            dynamoDbClient.deleteItem(request);
+
+            // Execute the query and get all matching items
+            QueryResponse queryResponse = dynamoDbClient.query(queryRequest);
+
+            List<Map<String, AttributeValue>> items = queryResponse.items();
+
+            // Step 2: Iterate over each item and delete it
+            for (Map<String, AttributeValue> item : items) {
+                // Extract the sort key (sk) for the item
+                String skValue = item.get(SK_COLUMN).n();
+
+                // Delete each item based on jobId (pk) and sk (sort key)
+                DeleteItemRequest deleteRequest = DeleteItemRequest.builder()
+                        .tableName(TABLE_NAME)
+                        .key(Map.of(
+                                PK_COLUMN, AttributeValue.builder().s(jobId).build(),
+                                SK_COLUMN, AttributeValue.builder().n(skValue).build()
+                        ))
+                        .build();
+
+                dynamoDbClient.deleteItem(deleteRequest);
+            }
         } catch (DynamoDbException e) {
-            throw new RuntimeException("Error deleting user: " + e.getMessage(), e);
+            throw new DatabaseOperationException("Error deleting job: " + e.getMessage(), e);
         }
     }
 
@@ -136,11 +163,11 @@ public class JobRepository {
                     .build();
 
             dynamoDbClient.putItem(putRequest);
-            System.out.println("Interview round saved successfully.");
+            log.info("Interview round saved successfully.");
         } catch (ConditionalCheckFailedException e) {
-            System.out.println("An interview round with this job ID and round count already exists.");
+            log.error("An interview round with this job ID and round count already exists.");
         } catch (DynamoDbException e) {
-            throw new RuntimeException("Error while saving interview for user id: " + userId + ", job id: " + jobId, e);
+            throw new DatabaseOperationException("Error while saving interview for user id: " + userId + ", job id: " + jobId, e);
         }
     }
 
@@ -155,7 +182,7 @@ public class JobRepository {
 
             return dynamoDbClient.query(request);
         } catch (DynamoDbException e) {
-            throw new RuntimeException("Error retrieving jobs for the job id: " + jobId + " " + e.getMessage(), e);
+            throw new DatabaseOperationException("Error retrieving jobs for the job id: " + jobId + " " + e.getMessage(), e);
         }
     }
 }
