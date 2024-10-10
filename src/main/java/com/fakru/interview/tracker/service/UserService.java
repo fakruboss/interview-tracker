@@ -152,15 +152,6 @@ public class UserService {
     }
 
     @LogExecutionTime
-    public String sendPhoneOTP1(JWTClaimsSet claimsSet, String phoneNumber) {
-        boolean isSent = verificationService.sendPhoneOTP(phoneNumber);
-        if (!isSent) {
-            throw new VerificationException("Error while sending OTP. Please try again after sometime");
-        }
-        return JoseJwtUtil.generateSafeToken(claimsSet.getSubject(), claimsSet.getClaims());
-    }
-
-    @LogExecutionTime
     public String verifyPhoneOTP(JWTClaimsSet claimsSet, String phoneNumber, String code) {
         boolean isValid = verificationService.verifyPhoneOTP(phoneNumber, code);
         if (!isValid) {
