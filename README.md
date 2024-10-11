@@ -31,9 +31,14 @@ You can access the API documentation using Swagger UI:
 
 **Technologies Used**
 
-	•	Java
-	•	Spring Boot
-	•	Swagger for API documentation
+- Documentation : swagger
+- Language: Java
+- Framework: Spring Boot 3
+- Cloud: AWS
+- Data Storage: DynamoDB
+- In-Memory Cache: Caffeine
+- SMS Client: Twilio
+- Email Client: Gmail
 
 **Contribution**
 
